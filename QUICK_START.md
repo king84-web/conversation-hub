@@ -3,18 +3,19 @@
 ## What's Been Built
 
 ✅ **Complete Frontend** - 7 main pages with responsive design
-✅ **API Routes** - Payment processing, email subscription, webhooks
-✅ **Backend Structure** - Express.js API ready for Railway
+✅ **API Routes** - All backend as Next.js serverless functions
+✅ **Database** - PostgreSQL (Neon) ready to connect
 ✅ **Design System** - Tailwind CSS with custom colors
 ✅ **Documentation** - Comprehensive guides included
 
 ## 📋 Current Status
 
 - **Frontend**: Fully functional and responsive ✅
-- **Backend**: Structure ready, needs database integration ⏳
+- **Database**: Neon PostgreSQL ready to connect ✅
+- **API Routes**: All implemented as serverless functions ✅
 - **Content**: Placeholders ready for Stephine's input ⏳
-- **Payments**: Flutterwave integration set up ✅
-- **Email**: Mailchimp integration ready ⏳
+- **Payments**: WhatsApp + Email contact form ✅
+- **Email**: Resend + Mailchimp integration ready ⏳
 
 ## 🏃 Quick Start (2 Minutes)
 
@@ -22,10 +23,6 @@
 
 ```bash
 # Frontend
-npm install
-
-# Backend (optional, for development)
-cd server
 npm install
 ```
 
@@ -37,7 +34,13 @@ NEXT_PUBLIC_FLUTTERWAVE_KEY=your_key_here
 PRODUCT_PRICE=5000
 MAILCHIMP_API_KEY=your_key
 MAILCHIMP_AUDIENCE_ID=your_id
-NEXT_PUBLIC_API_URL=http://localhost:5000
+# optional: AI assistant responses (improves quality)
+OPENAI_API_KEY=your_openai_api_key
+# optional: PostgreSQL database (Neon)
+DATABASE_URL=postgresql://...
+RESEND_API_KEY=re-...
+TWILIO_SID=...
+TWILIO_TOKEN=...
 ```
 
 ### 3. Run Development Server
@@ -52,13 +55,14 @@ Visit **http://localhost:3000**
 
 ```
 ├── src/
-│   ├── app/              # All pages and API routes
-│   ├── components/       # Reusable components
-│   └── styles/           # Global CSS
-├── server/               # Backend API (Node.js)
-├── public/               # Static assets
-├── package.json
-└── README.md
+│   ├── app/              # All pages and API routes (serverless)
+│   ├── components/       # Reusable React components
+│   ├── lib/              # Database & utilities
+│   └── types/            # TypeScript types
+├── public/               # Static assets (images, etc)
+├── .env.local            # Environment variables
+├── package.json          # Dependencies
+└── tsconfig.json         # TypeScript config
 ```
 
 ## 📄 Pages Built
@@ -103,23 +107,20 @@ Update these files:
 
 ## 🔧 API Endpoints
 
-### Frontend Routes (Next.js)
+All routes run as serverless functions on Vercel (no separate backend):
+
 ```
-POST   /api/checkout           - Flutterwave payment
-POST   /api/subscribe          - Email subscription
-POST   /api/webhooks/flutterwave - Payment webhook
+POST   /api/auth/login           - User login with password
+POST   /api/auth/signup          - User registration
+POST   /api/ai-responder         - AI chat (with OpenAI or fallback)
+POST   /api/checkout             - Flutterwave payment initialization
+POST   /api/subscribe            - Email subscription (Mailchimp)
+GET    /api/admin                - Admin dashboard data
+POST   /api/admin                - Admin actions (approve, delete, etc)
+POST   /api/webhooks/flutterwave - Payment confirmation webhook
 ```
 
-### Backend Routes (Node.js - Port 5000)
-```
-GET    /api/health            - Health check
-POST   /api/orders            - Create order
-GET    /api/orders/:id        - Get order
-POST   /api/subscribers       - Add subscriber
-POST   /api/applications      - Team application
-POST   /api/contact           - Contact message
-POST   /api/webhooks/flutterwave - Payment webhook
-```
+**Key Point**: Database queries use Neon's serverless connection pooling = fast, scalable, no server maintenance!
 
 ## 💳 Payment Integration
 
@@ -195,28 +196,35 @@ Items needed from Stephine:
 - [ ] Test WhatsApp links
 - [ ] Test mobile responsiveness
 - [ ] Add Google Analytics
-- [ ] Set up database (PostgreSQL)
-- [ ] Deploy backend to Railway
+- [ ] Set up database (Neon PostgreSQL)
 - [ ] Deploy frontend to Vercel
+- [ ] Configure API keys (optional, features degrade gracefully)
 
-### Deploy to Vercel (Frontend)
+### Deploy to Vercel (Frontend + Serverless API)
 
 ```bash
-# 1. Push to GitHub
+# 1. Build locally (verify success)
+npm run build
+
+# 2. Push to GitHub
 git push origin main
 
-# 2. Connect on Vercel dashboard
-# 3. Add environment variables
-# 4. Deploy!
+# 3. On Vercel dashboard:
+#    - Connect GitHub repo
+#    - Add .env.local variables
+#    - Add DATABASE_URL from Neon
+#    - Deploy!
 ```
 
-### Deploy to Railway (Backend)
+### Set Up Database (Neon PostgreSQL)
 
 ```bash
-# 1. Create Railway account
-# 2. Connect GitHub repo
-# 3. Add environment variables
-# 4. Deploy!
+# 1. Go to https://neon.tech
+# 2. Create free account
+# 3. Create PostgreSQL project
+# 4. Copy connection string
+# 5. Add to Vercel as DATABASE_URL env variable
+# Done! Database is live and serverless
 ```
 
 ## 🔐 Security Notes

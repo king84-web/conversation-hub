@@ -1,15 +1,43 @@
+"use client"
+
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function Home() {
   const whatsappUrl = 'https://wa.me/250798697053?text=Hi!%20I%27d%20like%20to%20order%20the%20Conversation%20Hub%20cards'
+  const [promos, setPromos] = useState<any[]>([])
+  const [settings, setSettings] = useState<any>({})
+
+  useEffect(() => {
+    fetch('/api/admin?action=promos')
+      .then(r => r.json())
+      .then(d => setPromos(d.data || []))
+      .catch(() => {})
+    fetch('/api/admin?action=settings')
+      .then(r => r.json())
+      .then(d => setSettings(d.data || {}))
+      .catch(() => {})
+  }, [])
 
   return (
     <>
       <Navigation />
       <main className="min-h-screen">
         {/* Hero Section */}
+        {promos.length > 0 && (
+          <section className="py-4 bg-yellow-100">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-4 items-center">
+              {promos.map(p => (
+                <div key={p.id} className="flex-1 text-center md:text-left">
+                  <p className="font-semibold">{p.title}</p>
+                  <p className="text-sm">{p.content}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
         <section 
           className="text-white py-20 md:py-32 relative"
           style={{
@@ -45,7 +73,7 @@ export default function Home() {
         </section>
 
         {/* What is Conversation Hub Section */}
-        <section className="py-16 md:py-24 bg-secondary">
+        <section className="py-16 md:py-24" style={{ backgroundColor: 'khaki' }}>
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">What is Conversation Hub?</h2>
             <div className="max-w-3xl mx-auto mb-12">
@@ -85,12 +113,16 @@ export default function Home() {
         </section>
 
         {/* Featured Product Section */}
-        <section className="py-16 md:py-24">
+        <section className="py-16 md:py-24" style={settings.heroImage ? { backgroundImage: `url(${settings.heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}>
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Our Product</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div className="bg-gray-200 h-96 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">Product Image</p>
+              <div className="bg-gray-200 h-96 rounded-lg flex items-center justify-center overflow-hidden">
+                <img
+                  src="/images/photo7.jpeg"
+                  alt="Conversation Hub Question Cards"
+                  className="object-cover w-full h-full"
+                />
               </div>
               <div>
                 <h3 className="text-2xl font-bold mb-6">Conversation Hub Question Cards</h3>
@@ -120,6 +152,77 @@ export default function Home() {
                   Order via WhatsApp
                 </a>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Cards Hub Interactive Section */}
+        <section className="py-16 md:py-24" style={{ backgroundColor: 'lightpink' }}>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Explore Our Cards Hub</h2>
+            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+              Experience meaningful conversations right now with our interactive Cards Hub. Answer thought-provoking questions and engage with intelligent AI responses designed to deepen your reflection.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+              <div className="bg-white p-8 rounded-lg shadow-md">
+                <div className="text-5xl mb-4">📱</div>
+                <h3 className="text-xl font-bold mb-4">Instant Access</h3>
+                <p className="text-gray-600 mb-4">
+                  Explore our full deck of conversation cards online. No purchase necessary — start your meaningful conversations today.
+                </p>
+                <Link
+                  href="/cards"
+                  className="inline-block bg-accent text-primary px-6 py-2 rounded font-semibold hover:bg-opacity-90 transition"
+                >
+                  Visit Cards Hub
+                </Link>
+              </div>
+
+              <div className="bg-white p-8 rounded-lg shadow-md">
+                <div className="text-5xl mb-4">🤖</div>
+                <h3 className="text-xl font-bold mb-4">Conversation Responder</h3>
+                <p className="text-gray-600 mb-4">
+                  Share your thoughts and receive thoughtful, empathetic responses from our intelligent conversation partner designed for deeper reflection.
+                </p>
+                <Link
+                  href="/cards"
+                  className="inline-block bg-accent text-primary px-6 py-2 rounded font-semibold hover:bg-opacity-90 transition"
+                >
+                  Start Conversation
+                </Link>
+              </div>
+            </div>
+            <div className="bg-white p-8 rounded-lg shadow-md text-center">
+              <h3 className="text-2xl font-bold mb-4">Multiple Card Decks to Explore</h3>
+              <p className="text-gray-600 mb-6">
+                Each deck is curated to explore different areas of your life and growth:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="p-4 bg-gray-50 rounded">
+                  <p className="font-semibold text-primary">Relationships & Connection</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded">
+                  <p className="font-semibold text-primary">Purpose & Dreams</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded">
+                  <p className="font-semibold text-primary">Reflection & Gratitude</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded">
+                  <p className="font-semibold text-primary">Faith & Values</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded">
+                  <p className="font-semibold text-primary">Society & Culture</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded">
+                  <p className="font-semibold text-primary">General Questions</p>
+                </div>
+              </div>
+              <Link
+                href="/cards"
+                className="inline-block bg-primary text-white px-8 py-3 rounded font-bold hover:bg-opacity-90 transition"
+              >
+                Explore All Decks
+              </Link>
             </div>
           </div>
         </section>

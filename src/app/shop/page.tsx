@@ -32,8 +32,12 @@ export default function Shop() {
             {/* Featured Product */}
             <div className="mb-16">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-12">
-                <div className="bg-gray-200 h-96 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-500">Product Image - Purpose & Dreams Deck</p>
+                <div className="bg-gray-200 h-96 rounded-lg flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/images/photo7.jpeg"
+                    alt="Conversation Hub card example - Purpose & Dreams deck"
+                    className="object-cover w-full h-full"
+                  />
                 </div>
 
                 <div>

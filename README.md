@@ -8,9 +8,11 @@ Conversation Hub is an e-commerce + community platform for selling conversation 
 **Developer:** Solomon Kamara  
 **Tech Stack:** 
 - Frontend: Next.js + Tailwind CSS (Vercel)
-- Backend: Node.js + Express + PostgreSQL (Railway)
-- Payments: Flutterwave
-- Email: Mailchimp/ConvertKit
+- Database: PostgreSQL (Neon)
+- Payments: Email contact (WhatsApp integration ready)
+- Email: Resend / Mailchimp
+- SMS/WhatsApp: Twilio
+- AI Chat: OpenAI (GPT-3.5)
 
 ## 📁 Project Structure
 
@@ -63,6 +65,8 @@ NEXT_PUBLIC_FLUTTERWAVE_KEY=your_flutterwave_public_key
 PRODUCT_PRICE=5000
 MAILCHIMP_API_KEY=your_mailchimp_api_key
 MAILCHIMP_AUDIENCE_ID=your_audience_id
+# (optional) key used by /api/ai-responder to generate better responses
+OPENAI_API_KEY=your_openai_api_key
 NEXT_PUBLIC_API_URL=http://localhost:5000
 ```
 
@@ -73,32 +77,26 @@ npm run dev
 
 Visit http://localhost:3000
 
-### Backend Setup
+### Database Setup (Neon)
 
-1. **Navigate to server directory:**
-```bash
-cd server
-```
+1. **Create Neon account:**
+   - Go to https://neon.tech
+   - Sign up free
+   - Create a PostgreSQL project
 
-2. **Install dependencies:**
-```bash
-npm install
-```
+2. **Get connection string:**
+   - Copy your connection string from Neon dashboard
+   - Format: `postgresql://user:password@host/database?sslmode=require`
 
-3. **Set up environment variables** (create `.env` file):
-```
-PORT=5000
-DATABASE_URL=postgresql://user:password@localhost:5432/conversation_hub
-FLUTTERWAVE_SECRET_KEY=your_secret_key
-JWT_SECRET=your_jwt_secret
-```
+3. **Set environment variable:**
+   ```bash
+   # Add to .env.local
+   DATABASE_URL=postgresql://...
+   ```
 
-4. **Run development server:**
-```bash
-npm run dev
-```
-
-API runs on http://localhost:5000
+4. **Database is now connected!**
+   - Uses serverless connection pooling
+   - Perfect for Vercel deployments
 
 ## 📄 Pages Overview
 
@@ -112,7 +110,7 @@ API runs on http://localhost:5000
 - Product gallery and details
 - "Purpose & Dreams Cards" product
 - "Coming Soon" for future decks
-- Dual checkout options (WhatsApp + Flutterwave)
+- Dual checkout options (WhatsApp + Email inquiry)
 
 ### 3. **About Page** (`/about`)
 - Our Story section
@@ -167,9 +165,7 @@ API runs on http://localhost:5000
 ## 🔐 API Endpoints
 
 ### Frontend API Routes
-- `POST /api/checkout` - Initialize Flutterwave payment
-- `POST /api/subscribe` - Email subscription
-- `POST /api/webhooks/flutterwave` - Payment webhook
+- `POST /api/contact` - Contact form (order inquiries)
 
 ### Backend API Routes
 - `GET /api/health` - Health check
@@ -178,7 +174,7 @@ API runs on http://localhost:5000
 - `POST /api/subscribers` - Add email subscriber
 - `POST /api/applications` - Submit team application
 - `POST /api/contact` - Send contact message
-- `POST /api/webhooks/flutterwave` - Handle payment webhook
+- `POST /api/contact` - Handle contact/order inquiry
 
 ## 🎨 Design System
 
@@ -243,7 +239,7 @@ npm run build
 
 ✅ Responsive design (mobile-first)
 ✅ WhatsApp integration
-✅ Flutterwave payment processing
+✅ Contact form for orders and inquiries
 ✅ Email subscription
 ✅ Admin dashboard structure (ready for implementation)
 ✅ Community engagement forms
@@ -252,15 +248,10 @@ npm run build
 
 ## 🎯 Next Steps
 
-1. Update `.env.local` with actual API keys
-2. Replace placeholder content with Stephine's details
-3. Add product images
-4. Implement backend database (PostgreSQL)
-5. Deploy to Vercel (frontend) and Railway (backend)
-6. Set up Mailchimp/ConvertKit integration
-7. Configure Flutterwave in production
-8. Implement admin dashboard
-9. Set up Google Analytics
+1. Update `.env.local` with API keys (optional - features gracefully degrade)
+2. Set `DATABASE_URL` to your Neon PostgreSQL connection string
+3. Deploy frontend to Vercel
+4. Done! Your site is live and upgradeable
 
 ## 💡 Notes
 

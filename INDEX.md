@@ -6,9 +6,9 @@
 
 A complete, production-ready website built with:
 - **Frontend**: Next.js 15 + TypeScript + Tailwind CSS (Vercel)
-- **Backend**: Node.js + Express + TypeScript (Railway)
-- **Payments**: Flutterwave (MTN, Airtel, Cards, Bank Transfer)
-- **Email**: Mailchimp/ConvertKit integration ready
+- **Database**: PostgreSQL (Neon serverless)
+- **Payments**: WhatsApp (direct contact) + Email inquiry
+- **Email**: Resend + Mailchimp integration ready
 - **Founder**: Stephine
 - **Developer**: Solomon Kamara
 

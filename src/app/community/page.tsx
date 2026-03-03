@@ -35,8 +35,12 @@ export default function Community() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="bg-gray-200 h-64 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-500">Photo {i}</p>
+                <div key={i} className="h-64 rounded-lg overflow-hidden">
+                  <img
+                    src={`/images/photo${i}.jpeg`}
+                    alt={`Photo ${i}`}
+                    className="object-cover w-full h-full"
+                  />
                 </div>
               ))}
             </div>

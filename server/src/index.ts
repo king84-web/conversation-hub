@@ -117,7 +117,7 @@ app.post('/api/webhooks/flutterwave', (req, res) => {
   }
 })
 
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 3001
 
 app.listen(PORT, () => {
   console.log(`Conversation Hub API running on port ${PORT}`)

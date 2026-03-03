@@ -32,6 +32,9 @@ export default function Navigation() {
             <Link href="/about" className="hover:text-accent transition">
               About
             </Link>
+            <Link href="/cards" className="hover:text-accent transition">
+              Cards Hub
+            </Link>
             <Link href="/try-cards" className="hover:text-accent transition">
               Try the Cards
             </Link>
@@ -73,6 +76,9 @@ export default function Navigation() {
             </Link>
             <Link href="/about" className="block py-2 hover:text-accent">
               About
+            </Link>
+            <Link href="/cards" className="block py-2 hover:text-accent">
+              Cards Hub
             </Link>
             <Link href="/try-cards" className="block py-2 hover:text-accent">
               Try the Cards

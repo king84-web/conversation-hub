@@ -51,6 +51,11 @@ export default function Footer() {
         <div className="border-t border-gray-700 pt-8 text-center text-sm text-gray-400">
           <p>&copy; 2026 Conversation Hub. All rights reserved.</p>
           <p className="mt-2">Developed by: <span className="text-accent">Solomon Kamara</span></p>
+          <p className="mt-4">
+            <Link href="/admin" className="text-gray-500 hover:text-accent transition text-xs">
+              Admin Portal
+            </Link>
+          </p>
         </div>
       </div>
     </footer>
