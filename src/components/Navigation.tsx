@@ -2,10 +2,30 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userName, setUserName] = useState('')
+
+  useEffect(() => {
+    const token = localStorage.getItem('authToken')
+    const name = localStorage.getItem('userName')
+    if (token && name) {
+      setIsLoggedIn(true)
+      setUserName(name)
+    }
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('userId')
+    localStorage.removeItem('userName')
+    setIsLoggedIn(false)
+    setUserName('')
+    window.location.href = '/'
+  }
 
   return (
     <nav className="bg-white shadow-md">
@@ -22,7 +42,7 @@ export default function Navigation() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex space-x-8">
+          <div className="hidden md:flex space-x-8 items-center">
             <Link href="/" className="hover:text-accent transition">
               Home
             </Link>
@@ -47,6 +67,24 @@ export default function Navigation() {
             <Link href="/contact" className="hover:text-accent transition">
               Contact
             </Link>
+            {isLoggedIn ? (
+              <>
+                <Link href="/profile" className="hover:text-accent transition">
+                  Profile ({userName})
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="hover:text-accent transition"
+                  aria-label="Logout"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link href="/auth/login" className="hover:text-accent transition">
+                Login
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -92,6 +130,24 @@ export default function Navigation() {
             <Link href="/contact" className="block py-2 hover:text-accent">
               Contact
             </Link>
+            {isLoggedIn ? (
+              <>
+                <Link href="/profile" className="block py-2 hover:text-accent">
+                  Profile ({userName})
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="block py-2 hover:text-accent text-left w-full"
+                  aria-label="Logout"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link href="/auth/login" className="block py-2 hover:text-accent">
+                Login
+              </Link>
+            )}
           </div>
         )}
       </div>

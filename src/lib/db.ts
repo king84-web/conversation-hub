@@ -425,6 +425,45 @@ export async function resetUserSecretKey(id: string): Promise<UserData | undefin
   return user
 }
 
+export async function updateUser(id: string, name?: string, secretKey?: string): Promise<UserData | undefined> {
+  if (pgPool) {
+    try {
+      const updates = []
+      const values = []
+      let paramIndex = 1
+      
+      if (name !== undefined) {
+        updates.push(`name=$${paramIndex}`)
+        values.push(name)
+        paramIndex++
+      }
+      if (secretKey !== undefined) {
+        updates.push(`secret_key=$${paramIndex}`)
+        values.push(secretKey)
+        paramIndex++
+      }
+      
+      if (updates.length === 0) return await findUserById(id)
+      
+      values.push(id)
+      const res = await pgPool.query(
+        `UPDATE users SET ${updates.join(', ')} WHERE id=$${paramIndex} RETURNING id, name, secret_key as "secretKey", created_at as "createdAt", created_by as "createdBy"`,
+        values
+      )
+      return res.rows[0]
+    } catch (e) {
+      console.error('DB error updating user, using in-memory:', e)
+    }
+  }
+  
+  const user = memoryDB.users.find(u => u.id === id)
+  if (user) {
+    if (name !== undefined) user.name = name
+    if (secretKey !== undefined) user.secretKey = secretKey
+  }
+  return user
+}
+
 
 export async function addCard(data: { name: string; description: string; categories: string[] }) {
   if (pgPool) {
@@ -560,7 +599,22 @@ export async function deleteCard(id: string) {
   memoryDB.cards = memoryDB.cards.filter(c => c.id !== id)
   return true
 }
-
+export async function verifyUserToken(token: string): Promise<UserData | null> {
+  try {
+    const decoded = Buffer.from(token, 'base64').toString('utf-8')
+    const parts = decoded.split(':')
+    if (parts.length < 2) return null
+    const name = parts[0]
+    const id = parts[1]
+    const user = await findUserById(id)
+    if (user && user.name === name) {
+      return user
+    }
+  } catch (e) {
+    console.error('Token verification error:', e)
+  }
+  return null
+}
 export async function addMessage(data: Omit<MessageData, 'id' | 'createdAt' | 'status'>) {
   const newMessage: MessageData = {
     ...data,
