@@ -167,7 +167,7 @@ export default function CardsHub() {
   }
 
   const currentCard = cards.find(c => c.id === selectedCard)
-  const currentQuestions = selectedCard ? SAMPLE_QUESTIONS[selectedCard as keyof typeof SAMPLE_QUESTIONS] : []
+  const currentQuestions = selectedCard ? (SAMPLE_QUESTIONS[selectedCard as keyof typeof SAMPLE_QUESTIONS] || []) : []
 
   const handleLogout = () => {
     localStorage.removeItem('authToken')
@@ -209,10 +209,10 @@ export default function CardsHub() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8">
             {/* Card Selection Panel */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-md p-6 sticky top-20">
+            <div className="md:col-span-1">
+              <div className="bg-white rounded-lg shadow-md p-6 sticky top-20 max-h-96 md:max-h-screen overflow-y-auto">
                 <h2 className="text-2xl font-bold mb-6">Card Decks</h2>
                 <div className="space-y-3">
                   {cards.map(card => (
@@ -233,7 +233,7 @@ export default function CardsHub() {
             </div>
 
             {/* Main Content Area */}
-            <div className="lg:col-span-3">
+            <div className="md:col-span-3">
               {!selectedCard ? (
                 <div className="bg-white rounded-lg shadow-md p-12 text-center">
                   <div className="inline-block text-6xl mb-6">📚</div>
@@ -251,11 +251,11 @@ export default function CardsHub() {
                   </div>
 
                   {/* Questions and Chat Area */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 auto-rows-max lg:auto-rows-auto">
                     {/* Questions List */}
-                    <div className="bg-white rounded-lg shadow-md p-6">
+                    <div className="bg-white rounded-lg shadow-md p-6 flex flex-col h-full">
                       <h3 className="text-xl font-bold mb-4">Sample Questions</h3>
-                      <div className="space-y-2 max-h-96 overflow-y-auto">
+                      <div className="space-y-2 overflow-y-auto flex-1">
                         {currentQuestions.map(question => (
                           <button
                             key={question.id}
@@ -276,7 +276,7 @@ export default function CardsHub() {
                     </div>
 
                     {/* Chat Area */}
-                    <div className="bg-white rounded-lg shadow-md p-6 flex flex-col h-96">
+                    <div className="bg-white rounded-lg shadow-md p-6 flex flex-col h-full min-h-96">
                       {selectedQuestion ? (
                         <>
                           <div className="flex items-center justify-between mb-4">

@@ -84,6 +84,8 @@ function generateSecretKey(): string {
 export async function initializeDatabase() {
   if (!pgPool) {
     console.log('initializeDatabase: no pgPool configured; skipping table creation')
+    // Seed cards to in-memory DB if no database
+    seedCardsToMemory()
     return
   }
   try {
@@ -128,8 +130,118 @@ export async function initializeDatabase() {
       );
     `)
     console.log('Database tables ensured')
+    // Seed initial cards if empty
+    seedCardsToDatabase()
   } catch (e) {
-    console.error('Failed to initialize DB tables:', e)
+    console.warn('Failed to initialize DB tables (falling back to in-memory):', e)
+    seedCardsToMemory()
+  }
+}
+
+function seedCardsToMemory() {
+  const defaultCards = [
+    {
+      id: 'relationships-connection',
+      name: 'Relationships & Connection',
+      description: 'Explore deep conversations about friendships, family, and human connections',
+      categories: ['Friendship & Community', 'Connection in the Modern World', 'Family & Support Systems', 'Love & Understanding']
+    },
+    {
+      id: 'purpose-dreams',
+      name: 'Purpose & Dreams',
+      description: 'Discover and discuss your life purpose, goals, and aspirations',
+      categories: ['Discovering Purpose', 'Pursuing Dreams', 'Living Intentionally']
+    },
+    {
+      id: 'reflection-gratitude',
+      name: 'Reflection & Gratitude',
+      description: 'Practice self-reflection and cultivate gratitude in your life',
+      categories: ['Self-Reflection', 'Gratitude in Everyday Life', 'Personal Growth']
+    },
+    {
+      id: 'faith-values',
+      name: 'Faith & Values',
+      description: 'Explore your faith, values, and what truly matters to you',
+      categories: ['Faith Journey', 'Values & Principles', 'Spiritual Growth']
+    },
+    {
+      id: 'society-culture',
+      name: 'Society & Culture',
+      description: 'Discuss community, social issues, and cultural perspectives',
+      categories: ['Community & Belonging', 'Social Awareness', 'Making a Difference']
+    },
+    {
+      id: 'general-questions',
+      name: 'General Questions',
+      description: 'Get to know yourself better through thoughtful questions',
+      categories: ['Getting to Know You', 'Life Experiences', 'Personal Stories']
+    }
+  ]
+  
+  if (memoryDB.cards.length === 0) {
+    memoryDB.cards = defaultCards.map(card => ({
+      ...card,
+      createdAt: new Date().toISOString()
+    }))
+    console.log('Seeded default cards to in-memory database')
+  }
+}
+
+async function seedCardsToDatabase() {
+  if (!pgPool) return
+  
+  try {
+    const defaultCards = [
+      {
+        id: 'relationships-connection',
+        name: 'Relationships & Connection',
+        description: 'Explore deep conversations about friendships, family, and human connections',
+        categories: ['Friendship & Community', 'Connection in the Modern World', 'Family & Support Systems', 'Love & Understanding']
+      },
+      {
+        id: 'purpose-dreams',
+        name: 'Purpose & Dreams',
+        description: 'Discover and discuss your life purpose, goals, and aspirations',
+        categories: ['Discovering Purpose', 'Pursuing Dreams', 'Living Intentionally']
+      },
+      {
+        id: 'reflection-gratitude',
+        name: 'Reflection & Gratitude',
+        description: 'Practice self-reflection and cultivate gratitude in your life',
+        categories: ['Self-Reflection', 'Gratitude in Everyday Life', 'Personal Growth']
+      },
+      {
+        id: 'faith-values',
+        name: 'Faith & Values',
+        description: 'Explore your faith, values, and what truly matters to you',
+        categories: ['Faith Journey', 'Values & Principles', 'Spiritual Growth']
+      },
+      {
+        id: 'society-culture',
+        name: 'Society & Culture',
+        description: 'Discuss community, social issues, and cultural perspectives',
+        categories: ['Community & Belonging', 'Social Awareness', 'Making a Difference']
+      },
+      {
+        id: 'general-questions',
+        name: 'General Questions',
+        description: 'Get to know yourself better through thoughtful questions',
+        categories: ['Getting to Know You', 'Life Experiences', 'Personal Stories']
+      }
+    ]
+    
+    // Use INSERT ... ON CONFLICT to gracefully handle existing cards
+    for (const card of defaultCards) {
+      await pgPool.query(
+        `INSERT INTO cards(id, name, description, categories, created_at) 
+         VALUES($1,$2,$3,$4,NOW())
+         ON CONFLICT (id) DO NOTHING`,
+        [card.id, card.name, card.description, card.categories]
+      )
+    }
+    console.log('Cards seeding completed (existing cards skipped)')
+  } catch (e) {
+    console.error('Failed to seed cards:', e)
   }
 }
 
@@ -147,7 +259,7 @@ export async function addUser(name: string, createdBy?: string): Promise<UserDat
     try {
       const res = await pgPool.query(
         `INSERT INTO users(id, name, secret_key, created_at, created_by) 
-         VALUES($1,$2,$3,NOW(),$4) RETURNING *`,
+         VALUES($1,$2,$3,NOW(),$4) RETURNING id, name, secret_key as "secretKey", created_at as "createdAt", created_by as "createdBy"`,
         [newUser.id, name, secretKey, createdBy || null]
       )
       return res.rows[0]
@@ -163,7 +275,7 @@ export async function addUser(name: string, createdBy?: string): Promise<UserDat
 export async function findUserByName(name: string): Promise<UserData | undefined> {
   if (pgPool) {
     try {
-      const res = await pgPool.query('SELECT * FROM users WHERE LOWER(name)=LOWER($1)', [name])
+      const res = await pgPool.query('SELECT id, name, secret_key as "secretKey", created_at as "createdAt", created_by as "createdBy" FROM users WHERE LOWER(name)=LOWER($1)', [name])
       return res.rows[0]
     } catch (e) {
       console.error('DB error, using in-memory:', e)
@@ -175,7 +287,7 @@ export async function findUserByName(name: string): Promise<UserData | undefined
 export async function findUserById(id: string): Promise<UserData | undefined> {
   if (pgPool) {
     try {
-      const res = await pgPool.query('SELECT * FROM users WHERE id=$1', [id])
+      const res = await pgPool.query('SELECT id, name, secret_key as "secretKey", created_at as "createdAt", created_by as "createdBy" FROM users WHERE id=$1', [id])
       return res.rows[0]
     } catch (e) {
       console.error('DB error, using in-memory:', e)
@@ -187,7 +299,7 @@ export async function findUserById(id: string): Promise<UserData | undefined> {
 export async function getAllUsers(): Promise<UserData[]> {
   if (pgPool) {
     try {
-      const res = await pgPool.query('SELECT * FROM users ORDER BY created_at DESC')
+      const res = await pgPool.query('SELECT id, name, secret_key as "secretKey", created_at as "createdAt", created_by as "createdBy" FROM users ORDER BY created_at DESC')
       return res.rows
     } catch (e) {
       console.error('DB error, using in-memory:', e)
@@ -215,7 +327,7 @@ export async function resetUserSecretKey(id: string): Promise<UserData | undefin
   if (pgPool) {
     try {
       const res = await pgPool.query(
-        'UPDATE users SET secret_key=$1 WHERE id=$2 RETURNING *',
+        'UPDATE users SET secret_key=$1 WHERE id=$2 RETURNING id, name, secret_key as "secretKey", created_at as "createdAt", created_by as "createdBy"',
         [secretKey, id]
       )
       return res.rows[0]
@@ -238,11 +350,15 @@ export async function validateAdminPassword(password: string): Promise<boolean> 
 
 export async function addCard(data: { name: string; description: string; categories: string[] }) {
   if (pgPool) {
-    const res = await pgPool.query(
-      `INSERT INTO cards(name, description, categories, created_at) VALUES($1,$2,$3,NOW()) RETURNING *`,
-      [data.name, data.description, data.categories]
-    )
-    return res.rows[0]
+    try {
+      const res = await pgPool.query(
+        `INSERT INTO cards(id, name, description, categories, created_at) VALUES($1,$2,$3,$4,NOW()) RETURNING *`,
+        [Date.now().toString(), data.name, data.description, data.categories]
+      )
+      return res.rows[0]
+    } catch (e) {
+      console.error('DB error adding card, using in-memory:', e)
+    }
   }
   const card = {
     id: Date.now().toString(),
@@ -257,19 +373,27 @@ export async function addCard(data: { name: string; description: string; categor
 
 export async function getCards() {
   if (pgPool) {
-    const res = await pgPool.query('SELECT * FROM cards ORDER BY created_at DESC')
-    return res.rows
+    try {
+      const res = await pgPool.query('SELECT * FROM cards ORDER BY created_at DESC')
+      return res.rows
+    } catch (e) {
+      console.error('DB error getting cards, using in-memory:', e)
+    }
   }
   return memoryDB.cards
 }
 
 export async function addPromo(data: { title: string; content: string; image?: string }) {
   if (pgPool) {
-    const res = await pgPool.query(
-      `INSERT INTO promos(title, content, image, created_at) VALUES($1,$2,$3,NOW()) RETURNING *`,
-      [data.title, data.content, data.image || null]
-    )
-    return res.rows[0]
+    try {
+      const res = await pgPool.query(
+        `INSERT INTO promos(id, title, content, image, created_at) VALUES($1,$2,$3,$4,NOW()) RETURNING *`,
+        [Date.now().toString(), data.title, data.content, data.image || null]
+      )
+      return res.rows[0]
+    } catch (e) {
+      console.error('DB error adding promo, using in-memory:', e)
+    }
   }
   const promo = {
     id: Date.now().toString(),
@@ -284,28 +408,44 @@ export async function addPromo(data: { title: string; content: string; image?: s
 
 export async function getPromos() {
   if (pgPool) {
-    const res = await pgPool.query('SELECT * FROM promos ORDER BY created_at DESC')
-    return res.rows
+    try {
+      const res = await pgPool.query('SELECT * FROM promos ORDER BY created_at DESC')
+      return res.rows
+    } catch (e) {
+      console.error('DB error getting promos, using in-memory:', e)
+    }
   }
   return memoryDB.promos
 }
 
 export async function deletePromo(id: string) {
+  if (pgPool) {
+    try {
+      await pgPool.query('DELETE FROM promos WHERE id=$1', [id])
+      return true
+    } catch (e) {
+      console.error('DB error, using in-memory:', e)
+    }
+  }
   memoryDB.promos = memoryDB.promos.filter(p => p.id !== id)
   return true
 }
 
 export async function updateSettings(data: { primaryColor?: string; sponsor?: string; heroImage?: string }) {
   if (pgPool) {
-    // upsert settings row (assumes single row with id=1)
-    await pgPool.query(
-      `INSERT INTO settings(id, primary_color, sponsor, hero_image)
-       VALUES(1,$1,$2,$3)
-       ON CONFLICT (id) DO UPDATE SET primary_color=$1,sponsor=$2,hero_image=$3`,
-      [data.primaryColor || null, data.sponsor || null, data.heroImage || null]
-    )
-    const res = await pgPool.query('SELECT * FROM settings WHERE id=1')
-    return res.rows[0]
+    try {
+      // upsert settings row (assumes single row with id=1)
+      await pgPool.query(
+        `INSERT INTO settings(id, primary_color, sponsor, hero_image)
+         VALUES(1,$1,$2,$3)
+         ON CONFLICT (id) DO UPDATE SET primary_color=$1,sponsor=$2,hero_image=$3`,
+        [data.primaryColor || null, data.sponsor || null, data.heroImage || null]
+      )
+      const res = await pgPool.query('SELECT * FROM settings WHERE id=1')
+      return res.rows[0]
+    } catch (e) {
+      console.error('DB error updating settings, using in-memory:', e)
+    }
   }
   memoryDB.settings = { ...memoryDB.settings, ...data }
   return memoryDB.settings
@@ -313,13 +453,25 @@ export async function updateSettings(data: { primaryColor?: string; sponsor?: st
 
 export async function getSettings() {
   if (pgPool) {
-    const res = await pgPool.query('SELECT * FROM settings WHERE id=1')
-    return res.rows[0] || {}
+    try {
+      const res = await pgPool.query('SELECT * FROM settings WHERE id=1')
+      return res.rows[0] || {}
+    } catch (e) {
+      console.error('DB error getting settings, using in-memory:', e)
+    }
   }
   return memoryDB.settings
 }
 
 export async function deleteCard(id: string) {
+  if (pgPool) {
+    try {
+      await pgPool.query('DELETE FROM cards WHERE id=$1', [id])
+      return true
+    } catch (e) {
+      console.error('DB error, using in-memory:', e)
+    }
+  }
   memoryDB.cards = memoryDB.cards.filter(c => c.id !== id)
   return true
 }

@@ -235,8 +235,8 @@ export default function TryCards() {
                 </div>
 
                 <div>
-                  <label className="block mb-2 font-semibold">How would you like to use the cards?</label>
-                  <select className="w-full px-4 py-3 rounded text-primary">
+                  <label htmlFor="usage" className="block mb-2 font-semibold">How would you like to use the cards?</label>
+                  <select id="usage" className="w-full px-4 py-3 rounded text-primary">
                     <option>Select an option</option>
                     <option>Personal reflection</option>
                     <option>With friends</option>

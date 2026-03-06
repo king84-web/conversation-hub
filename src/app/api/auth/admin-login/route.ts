@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { validateAdminPassword } from '@/lib/db'
+import { validateAdminPassword, initializeDatabase } from '@/lib/db'
 
 interface AdminLoginRequest {
   password: string
@@ -7,6 +7,9 @@ interface AdminLoginRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // Initialize database on first admin access
+    await initializeDatabase()
+
     const body: AdminLoginRequest = await request.json()
 
     if (!body.password) {

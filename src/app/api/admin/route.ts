@@ -16,7 +16,8 @@ import {
   getSettings,
   deleteCard,
   deletePromo,
-  validateAdminPassword
+  validateAdminPassword,
+  initializeDatabase
 } from '@/lib/db'
 
 // Middleware to check admin token
@@ -35,6 +36,9 @@ function validateAdminToken(request: NextRequest): boolean {
 
 export async function GET(request: NextRequest) {
   try {
+    // Initialize database on access
+    await initializeDatabase()
+
     const action = request.nextUrl.searchParams.get('action')
 
     if (action === 'users') {

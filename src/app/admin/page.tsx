@@ -375,14 +375,17 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {users.map(user => (
+                        {users.map(user => {
+                          const createdDate = user.createdAt ? new Date(user.createdAt) : null
+                          const isValidDate = createdDate && !isNaN(createdDate.getTime())
+                          return (
                           <tr key={user.id} className="border-b hover:bg-gray-50">
                             <td className="px-4 py-3 font-semibold">{user.name}</td>
                             <td className="px-4 py-3">
-                              <code className="bg-gray-100 px-2 py-1 rounded text-xs">{user.secretKey}</code>
+                              <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">{user.secretKey || '-'}</code>
                             </td>
                             <td className="px-4 py-3 text-xs text-gray-500">
-                              {new Date(user.createdAt).toLocaleDateString()}
+                              {isValidDate ? createdDate.toLocaleDateString() : 'Unknown'}
                             </td>
                             <td className="px-4 py-3 space-x-2">
                               <button
@@ -401,7 +404,8 @@ export default function AdminDashboard() {
                               </button>
                             </td>
                           </tr>
-                        ))}
+                        )
+                        })}
                       </tbody>
                     </table>
                     {users.length === 0 && (
