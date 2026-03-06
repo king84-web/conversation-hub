@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { validateAdminPassword, initializeDatabase } from '@/lib/db'
+import { validateAdminCredentials, initializeDatabase } from '@/lib/db'
 
 interface AdminLoginRequest {
   password: string
@@ -19,8 +19,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate admin password
-    const isValid = await validateAdminPassword(body.password)
+    // Validate admin credentials (checks env var + dynamic admins)
+    const isValid = await validateAdminCredentials(body.password)
     if (!isValid) {
       return NextResponse.json(
         { error: 'Invalid admin password' },

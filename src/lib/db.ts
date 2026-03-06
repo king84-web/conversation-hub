@@ -17,8 +17,15 @@ interface MessageData {
   subject: string
   message: string
   createdAt: string
-  type: 'inquiry' | 'feedback' | 'feedback-form'
+  type: 'inquiry' | 'feedback' | 'feedback-form' | 'admin'
   status: 'unread' | 'read'
+}
+
+interface AdminData {
+  id: string
+  name: string
+  password: string
+  createdAt: string
 }
 
 // determine whether to use a real database (prefer Neon serverless when available)
@@ -54,6 +61,7 @@ if (connectionString) {
 const memoryDB = {
   users: [] as UserData[],
   messages: [] as MessageData[],
+  admins: [] as AdminData[],
   cards: [] as {
     id: string
     name: string
@@ -127,6 +135,12 @@ export async function initializeDatabase() {
         created_at TIMESTAMPTZ DEFAULT NOW(),
         type TEXT,
         status TEXT
+      );
+      CREATE TABLE IF NOT EXISTS admins (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        password TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
       );
     `)
     console.log('Database tables ensured')
@@ -272,6 +286,67 @@ export async function addUser(name: string, createdBy?: string): Promise<UserDat
   return newUser
 }
 
+// --- admin helpers --------------------------------
+
+export async function addAdmin(name: string, password: string): Promise<AdminData> {
+  const newAdmin: AdminData = {
+    id: Date.now().toString(),
+    name,
+    password,
+    createdAt: new Date().toISOString()
+  }
+  if (pgPool) {
+    try {
+      const res = await pgPool.query(
+        `INSERT INTO admins(id,name,password,created_at) VALUES($1,$2,$3,NOW()) RETURNING id,name,password as "password",created_at as "createdAt"`,
+        [newAdmin.id, name, password]
+      )
+      return res.rows[0]
+    } catch (e) {
+      console.error('DB error adding admin, using in-memory:', e)
+    }
+  }
+  memoryDB.admins.push(newAdmin)
+  return newAdmin
+}
+
+export async function getAdmins(): Promise<AdminData[]> {
+  if (pgPool) {
+    try {
+      const res = await pgPool.query('SELECT id, name, password, created_at as "createdAt" FROM admins ORDER BY created_at DESC')
+      return res.rows
+    } catch (e) {
+      console.error('DB error retrieving admins, using in-memory:', e)
+    }
+  }
+  return memoryDB.admins
+}
+
+export async function deleteAdmin(id: string): Promise<boolean> {
+  if (pgPool) {
+    try {
+      await pgPool.query('DELETE FROM admins WHERE id=$1', [id])
+      return true
+    } catch (e) {
+      console.error('DB error deleting admin, using in-memory:', e)
+    }
+  }
+  memoryDB.admins = memoryDB.admins.filter(a => a.id !== id)
+  return true
+}
+
+export async function validateAdminCredentials(password: string): Promise<boolean> {
+  // always allow the single env password too
+  const envPass = process.env.ADMIN_PASSWORD || memoryDB.adminPassword
+  if (password === envPass) return true
+
+  const admins = await getAdmins()
+  return admins.some(a => a.password === password)
+}
+
+// keep old name for backwards compatibility
+export const validateAdminPassword = validateAdminCredentials
+
 export async function findUserByName(name: string): Promise<UserData | undefined> {
   if (pgPool) {
     try {
@@ -350,10 +425,6 @@ export async function resetUserSecretKey(id: string): Promise<UserData | undefin
   return user
 }
 
-export async function validateAdminPassword(password: string): Promise<boolean> {
-  const adminPassword = process.env.ADMIN_PASSWORD || memoryDB.adminPassword
-  return password === adminPassword
-}
 
 export async function addCard(data: { name: string; description: string; categories: string[] }) {
   if (pgPool) {

@@ -1,8 +1,117 @@
+import { useState } from 'react'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 
 export default function Contact() {
   const whatsappUrl = 'https://wa.me/250798697053'
+
+  function ContactForm() {
+    const [name, setName] = useState('')
+    const [email, setEmail] = useState('')
+    const [phone, setPhone] = useState('')
+    const [type, setType] = useState('')
+    const [message, setMessage] = useState('')
+    const [status, setStatus] = useState('')
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault()
+      setStatus('sending')
+      try {
+        const res = await fetch('/api/admin?action=add-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, subject: type, message, type: 'contact' })
+        })
+        if (!res.ok) throw new Error('Failed')
+        setStatus('sent')
+        setName('')
+        setEmail('')
+        setPhone('')
+        setType('')
+        setMessage('')
+      } catch (err) {
+        setStatus('error')
+      }
+    }
+
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block mb-2 font-semibold">Full Name</label>
+          <input
+            type="text"
+            placeholder="Your name"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            className="w-full px-4 py-3 rounded border border-gray-300"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block mb-2 font-semibold">Email Address</label>
+          <input
+            type="email"
+            placeholder="your@email.com"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            className="w-full px-4 py-3 rounded border border-gray-300"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block mb-2 font-semibold">Phone Number (optional)</label>
+          <input
+            type="tel"
+            placeholder="+250 7XX XXX XXX"
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            className="w-full px-4 py-3 rounded border border-gray-300"
+          />
+        </div>
+
+        <div>
+          <label className="block mb-2 font-semibold">Message Type</label>
+          <select
+            title="Message Type"
+            value={type}
+            onChange={e => setType(e.target.value)}
+            className="w-full px-4 py-3 rounded border border-gray-300"
+            required
+          >
+            <option value="">Select a topic</option>
+            <option>Product Inquiry</option>
+            <option>Partnership</option>
+            <option>Event Hosting</option>
+            <option>Feedback</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block mb-2 font-semibold">Message</label>
+          <textarea
+            placeholder="Tell us what's on your mind"
+            rows={5}
+            value={message}
+            onChange={e => setMessage(e.target.value)}
+            className="w-full px-4 py-3 rounded border border-gray-300"
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="w-full bg-primary text-white px-6 py-3 rounded font-bold hover:bg-opacity-90 transition"
+        >
+          {status === 'sending' ? 'Sending...' : 'Send Message'}
+        </button>
+        {status === 'sent' && <p className="text-green-600">Thank you! We'll be in touch.</p>}
+        {status === 'error' && <p className="text-red-600">Something went wrong.</p>}
+      </form>
+    )
+  }
 
   return (
     <>
@@ -10,18 +119,12 @@ export default function Contact() {
       <main className="min-h-screen">
         {/* Hero Section */}
         <section 
-          className="text-white py-16 relative"
-          style={{
-            backgroundImage: 'url(/images/hero-background.jpg)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundAttachment: 'fixed'
-          }}
+          className="text-white py-16 relative bg-cover bg-center bg-fixed bg-[url('/images/hero-background.jpg')]"
         >
           <div className="absolute inset-0 bg-black/60"></div>
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <h1 className="text-4xl font-bold mb-4 animate-fade-in-down" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>Contact Us</h1>
-            <p className="text-gray-300 animate-fade-in-up" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.8)' }}>We'd love to hear from you</p>
+            <h1 className="text-4xl font-bold mb-4 animate-fade-in-down">Contact Us</h1>
+            <p className="text-gray-300 animate-fade-in-up">We'd love to hear from you</p>
           </div>
         </section>
 
@@ -74,65 +177,7 @@ export default function Contact() {
 
               {/* Contact Form */}
               <div>
-                <form className="space-y-4">
-                  <div>
-                    <label className="block mb-2 font-semibold">Full Name</label>
-                    <input
-                      type="text"
-                      placeholder="Your name"
-                      className="w-full px-4 py-3 rounded border border-gray-300"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block mb-2 font-semibold">Email Address</label>
-                    <input
-                      type="email"
-                      placeholder="your@email.com"
-                      className="w-full px-4 py-3 rounded border border-gray-300"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block mb-2 font-semibold">Phone Number (optional)</label>
-                    <input
-                      type="tel"
-                      placeholder="+250 7XX XXX XXX"
-                      className="w-full px-4 py-3 rounded border border-gray-300"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block mb-2 font-semibold">Message Type</label>
-                    <select className="w-full px-4 py-3 rounded border border-gray-300" required>
-                      <option>Select a topic</option>
-                      <option>Product Inquiry</option>
-                      <option>Partnership</option>
-                      <option>Event Hosting</option>
-                      <option>Feedback</option>
-                      <option>Other</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block mb-2 font-semibold">Message</label>
-                    <textarea
-                      placeholder="Tell us what's on your mind"
-                      rows={5}
-                      className="w-full px-4 py-3 rounded border border-gray-300"
-                      required
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full bg-primary text-white px-6 py-3 rounded font-bold hover:bg-opacity-90 transition"
-                  >
-                    Send Message
-                  </button>
-                </form>
+                <ContactForm />
               </div>
             </div>
           </div>
@@ -193,7 +238,7 @@ export default function Contact() {
 
               <div>
                 <label className="block mb-2 font-semibold">Partnership Type</label>
-                <select className="w-full px-4 py-3 rounded border border-gray-300" required>
+                <select title="Partnership Type" className="w-full px-4 py-3 rounded border border-gray-300" required>
                   <option>Select partnership type</option>
                   <option>B2B Distribution</option>
                   <option>Event Sponsorship</option>

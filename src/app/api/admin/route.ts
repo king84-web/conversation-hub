@@ -16,9 +16,13 @@ import {
   getSettings,
   deleteCard,
   deletePromo,
-  validateAdminPassword,
-  initializeDatabase
+  validateAdminCredentials,
+  initializeDatabase,
+  getAdmins,
+  addAdmin,
+  deleteAdmin
 } from '@/lib/db'
+import { sendEmail } from '@/lib/notifications'
 
 // Middleware to check admin token
 function validateAdminToken(request: NextRequest): boolean {
@@ -47,6 +51,14 @@ export async function GET(request: NextRequest) {
       }
       const users = await getAllUsers()
       return NextResponse.json({ data: users })
+    }
+
+    if (action === 'admins') {
+      if (!validateAdminToken(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      const admins = await getAdmins()
+      return NextResponse.json({ data: admins })
     }
 
     if (action === 'messages') {
@@ -95,8 +107,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const action = request.nextUrl.searchParams.get('action')
 
-    // Require admin authentication for user management actions
-    if (['add-user', 'delete-user', 'reset-key'].includes(action || '')) {
+    // Require admin authentication for management actions
+    if (['add-user', 'delete-user', 'reset-key', 'add-admin', 'delete-admin'].includes(action || '')) {
       if (!validateAdminToken(request)) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
@@ -109,6 +121,24 @@ export async function POST(request: NextRequest) {
       }
       const newUser = await addUser(name, 'admin')
       return NextResponse.json({ success: true, data: newUser })
+    }
+
+    if (action === 'add-admin') {
+      const { name, password } = body
+      if (!name || !password) {
+        return NextResponse.json({ error: 'Name and password are required' }, { status: 400 })
+      }
+      const newAdmin = await addAdmin(name, password)
+      return NextResponse.json({ success: true, data: newAdmin })
+    }
+
+    if (action === 'delete-admin') {
+      const { adminId } = body
+      if (!adminId) {
+        return NextResponse.json({ error: 'Admin ID is required' }, { status: 400 })
+      }
+      await deleteAdmin(adminId)
+      return NextResponse.json({ success: true })
     }
 
     if (action === 'delete-user') {
@@ -165,6 +195,20 @@ export async function POST(request: NextRequest) {
       const { name, email, subject, message, type } = body
       await addMessage({ name, email, subject, message, type })
       return NextResponse.json({ success: true })
+    }
+
+    if (action === 'send-email') {
+      const { to, subject, html, text } = body
+      if (!to || !subject || (!html && !text)) {
+        return NextResponse.json({ error: 'Required fields missing' }, { status: 400 })
+      }
+      try {
+        await sendEmail(to, subject, html || text || '')
+        return NextResponse.json({ success: true })
+      } catch (e) {
+        console.error('send-email error', e)
+        return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
+      }
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
