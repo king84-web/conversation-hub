@@ -42,8 +42,9 @@ export default function AdminDashboard() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [newUserName, setNewUserName] = useState('')
   const [showAddUserForm, setShowAddUserForm] = useState(false)
+  const [usingMemory, setUsingMemory] = useState(false)
 
-  // Load admin token from localStorage
+  // Load admin token from localStorage and check DB status
   useEffect(() => {
     const savedToken = localStorage.getItem('adminToken')
     if (savedToken) {
@@ -51,6 +52,13 @@ export default function AdminDashboard() {
       setAdminToken(savedToken)
       loadDashboardData(savedToken)
     }
+    // fetch DB status once
+    fetch('/api/dbstatus')
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.usingMemory) setUsingMemory(true)
+      })
+      .catch(() => {})
   }, [])
 
   const handleAdminLogin = async (e: React.FormEvent) => {
@@ -127,7 +135,8 @@ export default function AdminDashboard() {
         return
       }
 
-      setUsers([data.data, ...users])
+      // refresh entire list so order matches server and avoid jumping
+      await loadDashboardData(adminToken)
       setNewUserName('')
       setShowAddUserForm(false)
       setToast({ message: `User "${newUserName}" added! Secret key: ${data.data.secretKey}`, type: 'success' })
@@ -157,7 +166,8 @@ export default function AdminDashboard() {
         return
       }
 
-      setUsers(users.filter(u => u.id !== userId))
+      // reload to ensure accurate order
+      await loadDashboardData(adminToken)
       setToast({ message: `User "${userName}" deleted`, type: 'success' })
     } catch (error) {
       setToast({ message: 'An error occurred', type: 'error' })
@@ -187,7 +197,8 @@ export default function AdminDashboard() {
         return
       }
 
-      setUsers(users.map(u => u.id === userId ? data.data : u))
+      // update list entry and preserve order; easiest to just reload
+      await loadDashboardData(adminToken)
       setToast({ message: `New secret key: ${data.data.secretKey}`, type: 'success' })
     } catch (error) {
       setToast({ message: 'An error occurred', type: 'error' })
@@ -272,6 +283,13 @@ export default function AdminDashboard() {
       <Navigation />
       <main className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          {usingMemory && (
+            <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded text-sm">
+              <strong>Notice:</strong> the system is using an in‑memory database. Any users or
+              content you add will disappear when the server restarts or redeploys. Connect a
+              persistent database (set <code>DATABASE_URL</code>) for a stable experience.
+            </div>
+          )}
           {toast && (
             <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
           )}

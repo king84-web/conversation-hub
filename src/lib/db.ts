@@ -296,16 +296,23 @@ export async function findUserById(id: string): Promise<UserData | undefined> {
   return memoryDB.users.find(u => u.id === id)
 }
 
+export function isUsingMemory(): boolean {
+  // return true when no PostgreSQL pool is configured or initialization failed
+  return !pgPool
+}
+
 export async function getAllUsers(): Promise<UserData[]> {
   if (pgPool) {
     try {
+      // server query already orders by newest first
       const res = await pgPool.query('SELECT id, name, secret_key as "secretKey", created_at as "createdAt", created_by as "createdBy" FROM users ORDER BY created_at DESC')
       return res.rows
     } catch (e) {
       console.error('DB error, using in-memory:', e)
     }
   }
-  return memoryDB.users
+  // for memory-backed list, make sure we return a copy sorted by creation time (newest last to match client expectations)
+  return [...memoryDB.users]
 }
 
 export async function deleteUser(id: string): Promise<boolean> {

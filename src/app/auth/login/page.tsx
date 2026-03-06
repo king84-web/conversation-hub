@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
@@ -12,6 +12,17 @@ export default function Login() {
   const [secretKey, setSecretKey] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [usingMemory, setUsingMemory] = useState(false)
+
+  // check database status once on mount
+  useEffect(() => {
+    fetch('/api/dbstatus')
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.usingMemory) setUsingMemory(true)
+      })
+      .catch(() => {})
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,6 +64,13 @@ export default function Login() {
         <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-lg shadow-md p-8">
             <h1 className="text-3xl font-bold mb-2 text-center">Welcome</h1>
+            {usingMemory && (
+              <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded text-sm">
+                <strong>Notice:</strong> the app is currently running with an in‑memory database. Users
+                are lost whenever the server restarts or deploys. To retain accounts you must
+                configure a persistent database (set <code>DATABASE_URL</code> – e.g. Neon on Vercel).
+              </div>
+            )}
             <p className="text-gray-600 text-center mb-8">
               Sign in with your credentials to access Conversation Hub
             </p>
