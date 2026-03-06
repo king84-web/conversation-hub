@@ -90,11 +90,41 @@ export default function CardsHub() {
     }
     setIsLoading(false)
 
-    // load cards from API
+    // Load cards from API with proper error handling
     fetch('/api/admin?action=cards')
-      .then(r => r.json())
-      .then(d => setCards(d.data || []))
-      .catch(console.error)
+      .then(r => {
+        if (!r.ok) throw new Error(`API returned ${r.status}`)
+        return r.json()
+      })
+      .then(d => {
+        const cardsData = d.data || []
+        if (cardsData.length === 0) {
+          console.warn('No cards received from API, using sample cards')
+          // Fallback to sample cards
+          setCards([
+            { id: 'relationships-connection', name: 'Relationships & Connection', description: 'Explore deep conversations about friendships, family, and human connections', categories: ['Friendship & Community'] },
+            { id: 'purpose-dreams', name: 'Purpose & Dreams', description: 'Discover and discuss your life purpose, goals, and aspirations', categories: ['Discovering Purpose'] },
+            { id: 'reflection-gratitude', name: 'Reflection & Gratitude', description: 'Practice self-reflection and cultivate gratitude in your life', categories: ['Self-Reflection'] },
+            { id: 'faith-values', name: 'Faith & Values', description: 'Explore your faith, values, and what truly matters to you', categories: ['Faith Journey'] },
+            { id: 'society-culture', name: 'Society & Culture', description: 'Discuss community, social issues, and cultural perspectives', categories: ['Community & Belonging'] },
+            { id: 'general-questions', name: 'General Questions', description: 'Get to know yourself better through thoughtful questions', categories: ['Getting to Know You'] }
+          ])
+        } else {
+          setCards(cardsData)
+        }
+      })
+      .catch(err => {
+        console.error('Error loading cards:', err)
+        // Fallback to sample cards on error
+        setCards([
+          { id: 'relationships-connection', name: 'Relationships & Connection', description: 'Explore deep conversations about friendships, family, and human connections', categories: ['Friendship & Community'] },
+          { id: 'purpose-dreams', name: 'Purpose & Dreams', description: 'Discover and discuss your life purpose, goals, and aspirations', categories: ['Discovering Purpose'] },
+          { id: 'reflection-gratitude', name: 'Reflection & Gratitude', description: 'Practice self-reflection and cultivate gratitude in your life', categories: ['Self-Reflection'] },
+          { id: 'faith-values', name: 'Faith & Values', description: 'Explore your faith, values, and what truly matters to you', categories: ['Faith Journey'] },
+          { id: 'society-culture', name: 'Society & Culture', description: 'Discuss community, social issues, and cultural perspectives', categories: ['Community & Belonging'] },
+          { id: 'general-questions', name: 'General Questions', description: 'Get to know yourself better through thoughtful questions', categories: ['Getting to Know You'] }
+        ])
+      })
   }, [router])
 
   const handleCardSelect = (cardId: string) => {

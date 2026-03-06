@@ -372,10 +372,17 @@ export async function addCard(data: { name: string; description: string; categor
 }
 
 export async function getCards() {
+  // Ensure cards are seeded to memory if empty
+  if (memoryDB.cards.length === 0) {
+    seedCardsToMemory()
+  }
+  
   if (pgPool) {
     try {
       const res = await pgPool.query('SELECT * FROM cards ORDER BY created_at DESC')
-      return res.rows
+      if (res.rows && res.rows.length > 0) {
+        return res.rows
+      }
     } catch (e) {
       console.error('DB error getting cards, using in-memory:', e)
     }
